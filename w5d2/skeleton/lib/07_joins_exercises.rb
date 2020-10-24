@@ -136,28 +136,28 @@ def andrews_films_and_leads
   # List the film title and the leading actor for all of the films 'Julie
   # Andrews' played in.
   execute(<<-SQL)
-  SELECT 
-    title, actors.name
+  SELECT
+    title, name
   FROM
     movies
   JOIN
-    castings ON castings.movie_id = movies.id
-  JOIN
-    actors ON castings.actor_id = actors.id
+    castings ON movies.id = castings.movie_id
+  JOIN 
+    actors ON actors.id = castings.actor_id
   WHERE
-    movies.id IN (
-        SELECT
-          movie_id
-        FROM
-          movies
-        JOIN
-          castings ON castings.movie_id = movies.id
-        JOIN
-          actors ON castings.actor_id = actors.id
-        WHERE
-          name = 'Julie Andrews'
-    ) AND ord = 1
-
+    ord = 1 AND
+      movies.id IN (
+      
+      SELECT
+        movies.id
+      FROM
+        movies
+      JOIN
+        castings ON movies.id = castings.movie_id
+      JOIN 
+        actors ON actors.id = castings.actor_id
+      WHERE
+        actors.name = 'Julie Andrews')
   SQL
 end
 
@@ -185,6 +185,23 @@ def prolific_actors
   # Obtain a list in alphabetical order of actors who've had at least 15
   # starring roles.
   execute(<<-SQL)
+    SELECT
+      actors.name
+    FROM
+      actors
+    JOIN
+      castings ON castings.actor_id = actors.id
+    JOIN
+      movies on castings.movie_id = movies.id
+    WHERE
+      ord = 1
+    GROUP BY
+      name
+    HAVING
+      COUNT(name) >= 15
+    ORDER BY
+      name 
+
   SQL
 end
 
@@ -192,11 +209,61 @@ def films_by_cast_size
   # List the films released in the year 1978 ordered by the number of actors
   # in the cast (descending), then by title (ascending).
   execute(<<-SQL)
+    SELECT
+      title, COUNT(name) AS actor_starred
+    FROM
+      movies
+    JOIN 
+      castings ON castings.movie_id = movies.id
+    JOIN 
+      actors ON castings.actor_id = actors.id
+    WHERE
+      yr = 1978
+    GROUP BY
+      title
+    ORDER BY
+      actor_starred DESC, title ASC
+
+
   SQL
 end
 
 def colleagues_of_garfunkel
   # List all the people who have played alongside 'Art Garfunkel'.
   execute(<<-SQL)
+    SELECT
+      name
+    FROM
+      actors
+    JOIN
+      castings ON castings.actor_id = actors.id
+    JOIN
+      movies ON castings.movie_id = movies.id
+    WHERE
+      movies.id IN (
+        SELECT
+          movie_id
+        FROM
+          movies
+        JOIN
+          castings ON castings.movie_id = movies.id
+        JOIN
+          actors ON castings.actor_id = actors.id
+        WHERE
+          name = 'Art Garfunkel'
+      )
+      AND name != 'Art Garfunkel'
+     
   SQL
 end
+
+    #  SELECT
+    #     movie_id
+    #   FROM
+    #     movies
+    #   JOIN
+    #     castings ON castings.movie_id = movies.id
+    #   JOIN
+    #     actors ON castings.actor_id = actors.id
+    #   WHERE
+    #     name = 'Art Garfunkel'
